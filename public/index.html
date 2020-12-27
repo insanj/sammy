@@ -62,6 +62,12 @@
 			</div>
 		</div>
 
+		<script>
+			if (window.location.hostname !== 'localhost' && window.location.protocol !== 'https:') {
+				window.location = `https:${window.location.href.substring(window.location.protocol.length)}`;
+			}
+		</script>
+
 		<script src="fontawesome.js" crossorigin="anonymous"></script>
 		<script src="three.min.js" type="module"></script>
 		<script src="GLTFLoader.js" type="module"></script>
