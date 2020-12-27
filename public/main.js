@@ -10,6 +10,7 @@ animate();
 	
 function init() {
     container = document.createElement( 'div' );
+    container.style.cursor = 'grab';
     document.body.appendChild( container );
 
     // CAMERA
@@ -126,6 +127,14 @@ function init() {
     // container.appendChild( stats.dom );
 
     window.addEventListener( 'resize', onWindowResize, false );
+
+    window.addEventListener( 'pointerdown', () => {
+        container.style.cursor = 'grabbing';
+    }, false);
+
+    window.addEventListener( 'pointerup', () => {
+        container.style.cursor = 'grab';
+    }, false);
 }
 
 function onWindowResize() {
