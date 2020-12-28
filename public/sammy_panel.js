@@ -17,8 +17,9 @@ function toggleModal(shouldShow) {
         const printDiv = document.getElementsByClassName("panel-print")[0];
         printDiv.style.display = 'block';
 
-        sammyPanel.style.width = 'calc(100% - 40px)';
+        sammyPanel.style.width = 'auto';
         sammyPanel.style.height = 'auto';
+
         sammyPanel.className += "printing";
     }
 
@@ -34,6 +35,7 @@ function toggleModal(shouldShow) {
 
         sammyPanel.style.width = '192px';
         sammyPanel.style.height = '246px';
+
         sammyPanel.className = sammyPanel.className.replace("printing", "");
     }
 

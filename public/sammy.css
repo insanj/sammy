@@ -342,7 +342,7 @@ input:focus, textarea:focus, select:focus{
     background: none;
     
     height: 26px;
-    width: 150px;
+    width: 200px;
 
     margin-bottom: 100px;
     display: inline-block;
@@ -374,7 +374,7 @@ input:focus, textarea:focus, select:focus{
 
 #mc-embedded-subscribe {
     display: inline-block;
-    width: 142px !important;
+    width: 190px !important;
 }
 
 .panel-print .save-button:hover {
@@ -419,16 +419,18 @@ input:focus, textarea:focus, select:focus{
 
 .panel-early-access {
     position: absolute;
-    top: 20px;
-    right: 20px;
+    top: 16px;
+    right: 16px;
 
-    padding: 2px;
+    padding: 4px;
 
     font-weight: 200;
 
     border: 1px solid #ffacac;
     color: #ffacac;
-    border-radius: 8px;
+    border-radius: 6px;
 
     opacity: 0.6;
+
+    line-height: 1;
 }
