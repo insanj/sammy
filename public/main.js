@@ -16,6 +16,8 @@ let sandwichOpened = false;
 
 let hiddenSandwichObjects;
 
+let swappedSandwichObjects = {};
+
 const sammyLayers = [{
     name: 'bottom_bun.gltf',
     open: 0,
@@ -31,12 +33,22 @@ const sammyLayers = [{
   }, {
     name: 'lettuce.gltf',
     open: 1.5,
-    closed: 1.15
-}, { 
+    closed: 1.15,
+    swaps: [{
+        name: 'bacon.gltf',
+        open: 0.2,
+        closed: -0.2
+    }]
+  }, { 
     name: 'tomatoes.gltf',
     open: 2,
-    closed: 1.4
-}, {  
+    closed: 1.4,
+    swaps: [{
+        name: 'eggs.gltf',
+        open: 0.5,
+        closed: -0.1
+    }]
+}, { 
     name: 'sauce.gltf',
     open: 2.5,
     closed: 1.7
@@ -240,9 +252,14 @@ function loadSammy() {
 
     const promises = sammyLayers.map(layer => {
         return new Promise((resolve, reject) => {
-            loader.load(layer.name, function(gltf) {
+            let sammyLayer = layer;
+            if (swappedSandwichObjects[layer.name]) {
+                sammyLayer = swappedSandwichObjects[layer.name];
+            }
+
+            loader.load(sammyLayer.name, function(gltf) {
                 resolve({
-                    layer,
+                    layer: sammyLayer,
                     scene: gltf.scene
                 });
             });
@@ -313,7 +330,10 @@ function openOrCloseSammy() {
 
     let i = 0;
     for (let layer of activeSandwich.children) {
-        const sammyLayer = sammyLayers[i];
+        let sammyLayer = sammyLayers[i];
+        if (swappedSandwichObjects[sammyLayer.name]) {
+            sammyLayer = swappedSandwichObjects[sammyLayer.name];
+        }
 
         const endPosition = new THREE.Vector3(0, sandwichOpened ? sammyLayer.open : sammyLayer.closed, 0);
         
@@ -416,6 +436,39 @@ function onSammyPartHide() {
     hiddenSandwichObjects = added;
 }
 
+function onSammySwapSelect() {
+    if (!selectedSandwichObject) {
+        return;
+    }
+
+    let isNotSwapped = true;
+    let swappedKey;
+    const swaps = Object.keys(swappedSandwichObjects);
+    for (let swapped of swaps) {
+        const swapLayer = swappedSandwichObjects[swapped];
+        if (swapLayer.name === selectedSandwichObject.layer.name) {
+            isNotSwapped = false;
+            swappedKey = swapped;
+        }
+    }
+
+    if (isNotSwapped && !selectedSandwichObject.layer.swaps) {
+        return;
+    }
+
+    if (isNotSwapped) {
+        // time to swap
+        swappedSandwichObjects[selectedSandwichObject.layer.name] = selectedSandwichObject.layer.swaps[0];
+        scene.remove(activeSandwich)
+        loadSammy();
+    } else {
+        // time to bring original back
+        delete swappedSandwichObjects[swappedKey];
+        scene.remove(activeSandwich)
+        loadSammy();
+    }
+}
+
 const panel = document.getElementById("sammy-panel");
 
 function onPanelClick() {
@@ -471,7 +524,7 @@ function onKeyPress( event ) {
 
     // left or right arrow key
     else if (event.keyCode === 37 || event.keyCode === 39) {
-
+        onSammySwapSelect();
     }
 
     // enter key
