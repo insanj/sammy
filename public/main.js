@@ -21,7 +21,12 @@ let swappedSandwichObjects = {};
 const sammyLayers = [{
     name: 'bottom_bun.gltf',
     open: 0,
-    closed: 0
+    closed: 0,
+    swaps: [{
+        name: 'bottom_bagel.gltf',
+        open: 0.08,
+        closed: 0.08
+    }]
 }, {
     name: 'bottom_patty.gltf',
     open: 0.5,
@@ -59,7 +64,12 @@ const sammyLayers = [{
 }, { 
     name: 'top_bun.gltf',
     open: 3.5,
-    closed: 2.4
+    closed: 2.4,
+    swaps: [{
+        name: 'top_bagel.gltf',
+        open: 1.1,
+        closed: 0.05
+    }]
 }];
 
 init();

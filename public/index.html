@@ -134,7 +134,7 @@
 		</div>
 
 		<footer>
-			(c) 2020 Snowcode, LLC
+			(c) 2020 Snowcode, LLC. <a href="#" onclick="showAttributions()">Attributions</a>.
 		</footer>
 
 		<script>
@@ -153,5 +153,12 @@
 
 		<script src="main.js" type="module"></script>
 		<script src="sammy_panel.js" type="module"></script>
+
+		<script>
+			function showAttributions() {
+				const attributionMessage = `🥪 sammy.best\n\nmade by snowcode, llc under lead developer julian (insanj) weiss.\n\nbuilt with node.js & three.js (+tween), source pending on github.\n\nsend us your 3d models! credits / attributions for sandwich parts:\n\n- Junk Food by tumairugara is licensed under Creative Commons Attribution\n- Eggs & Bacon by tumairugara is licensed under Creative Commons Attribution.\n- Bagel by cyrohzin is licensed under Creative Commons Attribution\n\n`;
+				alert(attributionMessage);
+			}
+		</script>
 	</body>
 </html>
