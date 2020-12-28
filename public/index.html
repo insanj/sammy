@@ -154,9 +154,15 @@
 		<script src="main.js" type="module"></script>
 		<script src="sammy_panel.js" type="module"></script>
 
+		<script type="module">
+			if (document.body.clientWidth < 440) {
+				alert("🥪 sammy.best is not yet able to work using your current screen size. please give us more space (and make sure you have a keyboard attached)!");
+			}
+		</script>
+
 		<script>
 			function showAttributions() {
-				const attributionMessage = `🥪 sammy.best\n\nmade by snowcode, llc under lead developer julian (insanj) weiss.\n\nbuilt with node.js & three.js (+tween), source pending on github.\n\nsend us your 3d models! credits / attributions for sandwich parts:\n\n- Junk Food by tumairugara is licensed under Creative Commons Attribution\n- Eggs & Bacon by tumairugara is licensed under Creative Commons Attribution.\n- Bagel by cyrohzin is licensed under Creative Commons Attribution\n\n`;
+				const attributionMessage = `🥪 sammy.best\n\nmade by snowcode, llc under lead developer julian (insanj) weiss.\n\nbuilt with node.js & three.js (+tween), source pending on github.\n\nsend us your 3d models! credits / attributions for sandwich parts:\n\n- Junk Food by tumairugara is licensed under Creative Commons Attribution\n- Eggs & Bacon by tumairugara is licensed under Creative Commons Attribution\n- Bagel by cyrohzin is licensed under Creative Commons Attribution\n- Butcher's Meat by tumairugara is licensed under Creative Commons Attribution\n`;
 				alert(attributionMessage);
 			}
 		</script>
