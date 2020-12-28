@@ -6,11 +6,15 @@ THREE.Cache.enabled = true;
 let container, stats, camera, scene, renderer, controls, group;
 
 let activeSandwich;
+let activeSandwichObjects;
 
-let activeSandwichScene;
-let activeSandwichMaterials;
+let selectedSandwichObject;
+let selectedSandwichScene;
+let selectedSandwichMaterials;
 
 let sandwichOpened = false;
+
+let hiddenSandwichObjects;
 
 const sammyLayers = [{
     name: 'bottom_bun.gltf',
@@ -144,7 +148,8 @@ function init() {
     controls.dampingFactor = 1;
 
     controls.screenSpacePanning = false;
-
+    controls.enablePan = false;
+    
     controls.minDistance = 100;
     controls.maxDistance = 500;
 
@@ -165,39 +170,67 @@ function init() {
         container.style.cursor = 'grab';
         onSammyStoppedGrabbing();
     }, false);
+
+    window.addEventListener( 'keydown', onKeyPress, false );
 }
 
-let turnAllMaterials = (thing, hex='ffacac', checkActive=true) => {};
-turnAllMaterials = (thing, hex='ffacac', checkActive=true) => {
+let turnAllMaterials = (thing, hex='ffacac', checkSelected=true) => {};
+turnAllMaterials = (thing, hex='ffacac', checkSelected=true) => {
     if (!thing || !thing.children || thing.children.length < 1) {
         return;
     }
 
-    if (checkActive) {
-        if (activeSandwichScene && activeSandwichMaterials) {
-            const materialsToChange = activeSandwichMaterials;
-            activeSandwichMaterials = {};
+    if (checkSelected) {
+        if (selectedSandwichScene && selectedSandwichMaterials) {
+            const materialsToChange = selectedSandwichMaterials;
+            selectedSandwichMaterials = {};
 
             for (let childUUID of Object.keys(materialsToChange)) {
-                turnAllMaterials(activeSandwichScene, materialsToChange[childUUID], false)
+                turnAllMaterials(selectedSandwichScene, materialsToChange[childUUID], false)
             }
         } else {
-            activeSandwichMaterials = {};
+            selectedSandwichMaterials = {};
         }
 
-        activeSandwichScene = thing;
+        selectedSandwichScene = thing;
     }
     
     for (let child of thing.children) {
-        turnAllMaterials(child, hex, checkActive);
+        turnAllMaterials(child, hex, checkSelected);
 
         if (child.material) {
-            if (checkActive) {
-                activeSandwichMaterials[child.uuid] = child.material.color.getHexString();
+            if (checkSelected) {
+                selectedSandwichMaterials[child.uuid] = child.material.color.getHexString();
             }
 
             const hexNum = parseInt(hex, 16);
             child.material.color.setHex(hexNum);
+        }
+    }
+}
+
+
+let fadeAllMaterials = (thing, opacity) => {};
+fadeAllMaterials = (thing, opacity) => {
+    if (!thing) {
+        return;
+    }
+
+    if (thing.material) {
+        thing.material.transparent = opacity !== 1.0;
+        thing.material.opacity = opacity;
+    }
+
+    if (!thing.children || thing.children.length < 1) {
+        return;
+    }
+    
+    for (let child of thing.children) {
+        fadeAllMaterials(child, opacity);
+
+        if (child.material) {
+            child.material.transparent = opacity !== 1.0;
+            child.material.opacity = opacity;
         }
     }
 }
@@ -223,7 +256,6 @@ function loadSammy() {
 
         const isOpen = sandwichOpened;
         
-        // let objectScenes = [];
         // const eventListeners = window.getEventListeners(renderer.domElement);
         // for (let eventListener of eventListeners) {
         //     if (eventListener.name !== "click") {
@@ -238,8 +270,6 @@ function loadSammy() {
             objectScene.position.set(0, isOpen ? object.layer.open : object.layer.closed, 0);
             sandwichGroup.add(objectScene);
 
-            // objectScenes.push(objectScene);
-
             renderer.domElement.addEventListener("click", function (event) {
                 const mouse = new THREE.Vector2();
                 mouse.x = ( event.clientX / window.innerWidth ) * 2 - 1;
@@ -250,6 +280,7 @@ function loadSammy() {
                 const intersects = raycaster.intersectObjects([objectScene], true);
                 if (intersects.length > 0) {
                     // alert("Selected " + object.layer.name);
+                    selectedSandwichObject = object;
                     turnAllMaterials(objectScene);
                 }
             }, true);
@@ -262,6 +293,7 @@ function loadSammy() {
         }
 
         activeSandwich = sandwichGroup;
+        activeSandwichObjects = objects;
 
         scene.add(sandwichGroup);
     }).catch(error => {
@@ -270,6 +302,9 @@ function loadSammy() {
 }
 
 function onSammyStoppedGrabbing() {
+}
+
+function openOrCloseSammy() {
     if (!activeSandwich) {
         return; 
     }
@@ -319,6 +354,132 @@ function onSammyStartedGrabbing() {
 //         alert("clicked " + layer.name);
 //     }
 // }
+
+function onSammyPartSelect(offset) {
+    let objectToSelect;
+    if (!selectedSandwichScene || !activeSandwichObjects) { // nothing selected yet
+        if (offset >= 0) {
+            objectToSelect = activeSandwichObjects[0];
+        } else {
+            objectToSelect = activeSandwichObjects[activeSandwichObjects.length-1];
+        }
+    }
+
+    else { // something is selected
+        const currentIndex = activeSandwichObjects.findIndex((object) => {
+            const uuid = object.scene.uuid;
+            const selectedUUID = selectedSandwichObject.scene.uuid;
+            return uuid === selectedUUID;
+        }); // find index using uuid 
+
+        let nextIndex = currentIndex + offset;
+
+        if (nextIndex >= activeSandwichObjects.length) {
+            nextIndex = 0;
+        } else if (nextIndex < 0) {
+            nextIndex = activeSandwichObjects.length-1;
+        } // make sure we wrap around properly if we're at end of sammy
+
+        objectToSelect = activeSandwichObjects[nextIndex];
+    }
+    
+    selectedSandwichObject = objectToSelect;
+    turnAllMaterials(objectToSelect.scene); // select using same method as clicking
+}
+
+function onSammyPartHide() {
+    if (!selectedSandwichObject) { // nothing selected, nothing to hide
+        return;
+    }
+
+    if (hiddenSandwichObjects && hiddenSandwichObjects.length > 0) {
+        const filtered = hiddenSandwichObjects.filter(object => {
+            return selectedSandwichObject.scene.uuid !== object.scene.uuid;
+        });
+        
+        if (filtered.length !== hiddenSandwichObjects.length) {
+            // we have now SHOWN something that was already hidden
+            fadeAllMaterials(selectedSandwichObject.scene, 1.0);
+            hiddenSandwichObjects = filtered;
+            return;
+        }
+    }
+
+    // we now need to HIDE the thing
+    if (!hiddenSandwichObjects) {
+        hiddenSandwichObjects = [];
+    }
+
+    let added = hiddenSandwichObjects;
+    added.push(selectedSandwichObject);
+    fadeAllMaterials(selectedSandwichObject.scene, 0.2);
+    hiddenSandwichObjects = added;
+}
+
+const panel = document.getElementById("sammy-panel");
+
+function onPanelClick() {
+    if (!panel.style.opacity || panel.style.opacity >= 1.0) {
+        panel.style.opacity = 0.1;
+    }
+
+    else {
+        panel.style.opacity = 1.0;
+    }
+}
+
+panel.addEventListener("click", (event) => {
+    if (event.target.nodeName === 'A' ) {
+        return;
+    }
+
+    if (event.target.className === 'panel-button') {
+        return;
+    }
+
+    let parent = event.target.parentElement;
+    while (parent) {
+        if (parent.className.includes('panel-toolbar') || parent.className.includes('print')) {
+            return;
+        }
+
+        parent = parent.parentElement;
+    }
+
+    onPanelClick();
+}, false);
+
+function onKeyPress( event ) {
+    // esc
+    if (event.keyCode === 27) {
+        onPanelClick();
+    }
+
+    // space
+    else if (event.keyCode === 32) {
+        openOrCloseSammy();
+    }
+
+    // up or down arrow key
+    else if (event.keyCode === 38) {
+        onSammyPartSelect(1);
+    }
+    
+    else if (event.keyCode === 40) {
+        onSammyPartSelect(-1);
+    }
+
+    // left or right arrow key
+    else if (event.keyCode === 37 || event.keyCode === 39) {
+
+    }
+
+    // enter key
+    else if (event.keyCode === 13) {
+        onSammyPartHide();
+    }
+
+}
 
 function onWindowResize() {
 
