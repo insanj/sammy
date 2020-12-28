@@ -29,8 +29,13 @@ const sammyLayers = [{
     }]
 }, {
     name: 'bottom_patty.gltf',
-    open: 0.5,
-    closed: 0.5
+    open: 0.58,
+    closed: 0.5,
+    swaps: [{
+        name: 'sausages.gltf',
+        open: 0.08,
+        closed: 0.02
+    }]
  }, {
     name: 'cheese.gltf',
     open: 1,
@@ -60,7 +65,12 @@ const sammyLayers = [{
 }, {
     name: 'top_patty.gltf',
     open: 3,
-    closed: 2.1
+    closed: 2.1,
+    swaps: [{
+        name: 'tbone.gltf',
+        open: 0.93,
+        closed: 0
+    }]
 }, { 
     name: 'top_bun.gltf',
     open: 3.5,
@@ -98,30 +108,6 @@ function init() {
     scene.add(grid);
 
     // LIGHTS
-    // const dirLight = new THREE.DirectionalLight(0xffffff, 1);
-    // dirLight.castShadow = true;
-    // scene.add( dirLight );
-
-    // const pointLight1 = new THREE.PointLight(0xc4c4c4,0.5);
-    // pointLight1.position.set(-100,100,1);
-    // scene.add(pointLight1);
-    
-    // const pointLight2 = new THREE.PointLight(0xc4c4c4,0.5);
-    // pointLight1.position.set(100,0,1);
-    // scene.add(pointLight2);
-
-    // const pointLight3 = new THREE.PointLight(0xc4c4c4,0.5);
-    // pointLight3.position.set(0,100,-100);
-    // scene.add(pointLight3);
-
-    // const pointLight4 = new THREE.PointLight(0xffffff,2.2);
-    // pointLight4.position.set(300,300,0);
-    // scene.add(pointLight4);
-
-    // const light = new THREE.PointLight(0xc4c4c4,10);
-    // light.position.set(0,300,500);
-    // scene.add(light);
-
     var pointLight = new THREE.PointLight(0xc4c4c4);
     pointLight.position.set(-30, 0, 0);
     scene.add(pointLight);
@@ -131,7 +117,7 @@ function init() {
     scene.add(pointLight);
 
     var pointLight = new THREE.PointLight(0xc4c4c4);
-    pointLight.position.set(0, 30, 0);
+    pointLight.position.set(0, 50, 0);
     scene.add(pointLight);
 
     var pointLight = new THREE.PointLight(0xc4c4c4);
@@ -198,7 +184,20 @@ function init() {
 
 let turnAllMaterials = (thing, hex='ffacac', checkSelected=true) => {};
 turnAllMaterials = (thing, hex='ffacac', checkSelected=true) => {
-    if (!thing || !thing.children || thing.children.length < 1) {
+    if (!thing) {
+        return;
+    } 
+
+    // if (thing.material) {
+    //     if (checkSelected) {
+    //         selectedSandwichMaterials[thing.uuid] = thing.material.color.getHexString();
+    //     }
+
+    //     const hexNum = parseInt(hex, 16);
+    //     thing.material.color.setHex(hexNum);
+    // }
+    
+    if (!thing.children || thing.children.length < 1) {
         return;
     }
 
@@ -292,10 +291,19 @@ function loadSammy() {
         //     renderer.domElement.removeEventListener("click", eventListener.listener, eventListener.useCapture);
         // }
 
+        let selectCompletionBlock;
+
         for (let object of objects) {
             const objectScene = object.scene;
             objectScene.position.set(0, isOpen ? object.layer.open : object.layer.closed, 0);
             sandwichGroup.add(objectScene);
+
+            if (selectedSandwichObject) {
+                if (selectedSandwichObject.layer.name === object.layer.name || (selectedSandwichObject.layer.swaps && selectedSandwichObject.layer.swaps.find(s => object.layer.name === s.name)) || (object.layer.swaps && object.layer.swaps.find(s => selectedSandwichObject.layer.name === s.name))) {
+                    selectedSandwichObject = object;
+                    turnAllMaterials(objectScene);
+                }
+            }
 
             renderer.domElement.addEventListener("click", function (event) {
                 const mouse = new THREE.Vector2();
@@ -323,6 +331,10 @@ function loadSammy() {
         activeSandwichObjects = objects;
 
         scene.add(sandwichGroup);
+
+        // if (selectCompletionBlock) {
+        //     selectCompletionBlock();
+        // }
     }).catch(error => {
         alert(error);
     });
