@@ -394,7 +394,6 @@ turnAllMaterials = (thing, hex='ffacac', checkSelected=true) => {
     }
 }
 
-
 let fadeAllMaterials = (thing, opacity) => {};
 fadeAllMaterials = (thing, opacity) => {
     if (!thing) {
@@ -511,6 +510,11 @@ function loadSammy() {
         // }
 
         playSammySoundtrack();
+
+        const loadinDiv = document.getElementById('sammy-loadin');
+        if (loadinDiv) {
+            loadinDiv.outerHTML = '';
+        }
     }).catch(error => {
         alert(error);
     });
