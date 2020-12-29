@@ -18,67 +18,87 @@ let hiddenSandwichObjects;
 
 let swappedSandwichObjects = {};
 
+let sammyHasInteracted = false;
+let sammySoundtrackCurrentlyPlaying = {};
+let sammySoundtrackRuntimeRunning = false;
+let sammySoundtrackRuntimeRunAgain = false;
+let sammySoundtrackLoadedAudios = {};
+
 const sammyLayers = [{
     name: 'bottom_bun.gltf',
     open: 0,
     closed: 0,
+    sound: 'bottom_bun.mp3',
     swaps: [{
         name: 'bottom_bagel.gltf',
         open: 0.08,
-        closed: 0.08
+        closed: 0.08,
+        sound: 'bottom_bagel.mp3'
     }]
 }, {
     name: 'bottom_patty.gltf',
     open: 0.58,
     closed: 0.5,
+    sound: 'bottom_patty.mp3',
     swaps: [{
         name: 'sausages.gltf',
         open: 0.08,
-        closed: 0.02
+        closed: 0.02,
+        sound: 'sausages.mp3',
     }]
  }, {
     name: 'cheese.gltf',
     open: 1,
-    closed: 0.78
+    closed: 0.78,
+    sound: 'cheese.mp3'
   }, {
     name: 'lettuce.gltf',
     open: 1.5,
     closed: 1.15,
+    sound: 'lettuce.mp3',
     swaps: [{
         name: 'bacon.gltf',
         open: 0.2,
-        closed: -0.2
+        closed: -0.2,
+        sound: 'bacon.mp3'
     }]
   }, { 
     name: 'tomatoes.gltf',
     open: 2,
     closed: 1.4,
+    sound: 'tomatoes.mp3',
     swaps: [{
         name: 'eggs.gltf',
         open: 0.5,
-        closed: -0.1
+        closed: -0.1,
+        sound: 'eggs.mp3'
     }]
 }, { 
     name: 'sauce.gltf',
     open: 2.5,
-    closed: 1.7
+    closed: 1.7,
+    sound: 'sauce.mp3'
 }, {
     name: 'top_patty.gltf',
     open: 3,
     closed: 2.1,
+    sound: 'top_patty.mp3',
     swaps: [{
         name: 'tbone.gltf',
         open: 0.93,
-        closed: 0
+        closed: 0,
+        sound: 'tbone.mp3'
     }]
 }, { 
     name: 'top_bun.gltf',
     open: 3.5,
     closed: 2.4,
+    sound: 'top_bun.mp3',
     swaps: [{
         name: 'top_bagel.gltf',
         open: 1.1,
-        closed: 0.05
+        closed: 0.05,
+        sound: 'top_bagel.mp3'
     }]
 }];
 
@@ -167,19 +187,163 @@ function init() {
     stats = new Stats();
     // container.appendChild( stats.dom );
 
+    // SOUNDS
     window.addEventListener( 'resize', onWindowResize, false );
 
     window.addEventListener( 'pointerdown', () => {
+        checkFirstTimeSammySoundtrackPlay();
         container.style.cursor = 'grabbing';
         onSammyStartedGrabbing();
     }, false);
 
     window.addEventListener( 'pointerup', () => {
+        checkFirstTimeSammySoundtrackPlay();
         container.style.cursor = 'grab';
         onSammyStoppedGrabbing();
     }, false);
 
     window.addEventListener( 'keydown', onKeyPress, false );
+}
+
+async function playSammySoundtrackRuntime() {
+    if (sammySoundtrackRuntimeRunning) {
+        sammySoundtrackRuntimeRunAgain = true;
+        return;
+    }
+
+    if (!sammyHasInteracted) {
+        return; // prevent autoplay block
+    }
+
+    sammySoundtrackRuntimeRunning = true;
+
+    if (!sandwichOpened) {
+        const playingAudios = Object.values(sammySoundtrackCurrentlyPlaying);
+        for (let audio of playingAudios) {
+            // stop playing
+            audio.pause();
+            audio.volume = 0;
+            audio.currentTime = 0;
+        }
+
+        sammySoundtrackCurrentlyPlaying = {};
+        sammySoundtrackRuntimeRunning = false;
+        return;
+    }
+
+    const loadSoundtrackSound = function (name) {
+        return new Promise((resolve, reject) => {
+            const exists = sammySoundtrackLoadedAudios[name];
+            if (exists) {
+                resolve(exists);
+                return;
+            }
+
+            const soundURL = `soundtrack/${name}`;
+            const audio = new Audio(soundURL);
+            audio.load();
+
+            audio.addEventListener("canplaythrough", () => {
+                sammySoundtrackLoadedAudios[name] = audio;
+                resolve(audio);
+            });
+        });
+    };
+    
+    const currentPlayingNames = Object.keys(sammySoundtrackCurrentlyPlaying);
+
+    let preparedAudios = [];
+    let shouldBePlayingNames = [];
+    for (let object of activeSandwichObjects) {
+        const sound = object.layer.sound;
+        if (!sound) {
+            continue;
+        }
+
+        if (hiddenSandwichObjects && hiddenSandwichObjects.length > 0) {
+            const isHidden = hiddenSandwichObjects.find((object) => {
+                return object.layer.sound && object.layer.sound === sound;
+            });
+            
+            if (isHidden) {
+                continue;
+            }
+        }
+
+        shouldBePlayingNames.push(sound);
+
+        if (currentPlayingNames.includes(sound)) {
+            continue;
+        }
+
+        // needs to start playing
+        const audio = await loadSoundtrackSound(sound);
+        audio.volume = 1.0;
+        preparedAudios.push({
+            object, audio
+        });
+    }
+
+    let currentPlaybackTime = 0;
+    if (currentPlayingNames.length > 0) {
+        const firstPlayingAudio = Object.values(sammySoundtrackCurrentlyPlaying)[0];
+        currentPlaybackTime = firstPlayingAudio.currentTime;
+    }    
+
+    for (let prepared of preparedAudios) {
+        const audio = prepared.audio;
+        audio.loop = true;
+        audio.play();
+        audio.currentTime = currentPlaybackTime;
+
+        const object = prepared.object;
+        sammySoundtrackCurrentlyPlaying[object.layer.sound] = audio;
+    }
+
+    for (let existing of currentPlayingNames) {
+        const shouldBePlaying = shouldBePlayingNames.find((name) => {
+            return name === existing;
+        });
+
+        if (shouldBePlaying) {
+            continue;
+        }
+
+        // stop playing
+        const audio = sammySoundtrackCurrentlyPlaying[existing];
+        audio.pause();
+        audio.volume = 0;
+        audio.currentTime = 0;
+
+        delete sammySoundtrackCurrentlyPlaying[existing];
+    }
+
+    sammySoundtrackRuntimeRunning = false;
+    if (sammySoundtrackRuntimeRunAgain) {
+        sammySoundtrackRuntimeRunAgain = false;
+        playSammySoundtrack();
+    }
+}
+
+function playSammySoundtrack() {
+    playSammySoundtrackRuntime()
+        .then((soundtrackResponse) => {})
+        .catch((soundtrackError) => {
+            console.log(soundtrackError);
+        });
+}
+
+function checkFirstTimeSammySoundtrackPlay() {
+    if (!sammyHasInteracted) {
+        sammyHasInteracted = true;
+    }
+
+    const playingNames = Object.keys(sammySoundtrackCurrentlyPlaying);
+    if (playingNames.length > 0) {
+        return; // already assume we're playing (won't work if all layers hidden, but that's fine...)
+    }
+
+    playSammySoundtrack();
 }
 
 let turnAllMaterials = (thing, hex='ffacac', checkSelected=true) => {};
@@ -305,6 +469,16 @@ function loadSammy() {
                 }
             }
 
+            if (hiddenSandwichObjects) {
+                const isHidden = hiddenSandwichObjects.find(hidden => {
+                    return object.layer.name === hidden.layer.name;
+                });
+
+                if (isHidden) {
+                    fadeAllMaterials(objectScene, 0.2);
+                }
+            }
+
             renderer.domElement.addEventListener("click", function (event) {
                 const mouse = new THREE.Vector2();
                 mouse.x = ( event.clientX / window.innerWidth ) * 2 - 1;
@@ -335,6 +509,8 @@ function loadSammy() {
         // if (selectCompletionBlock) {
         //     selectCompletionBlock();
         // }
+
+        playSammySoundtrack();
     }).catch(error => {
         alert(error);
     });
@@ -349,6 +525,7 @@ function openOrCloseSammy() {
     }
 
     sandwichOpened = !sandwichOpened;
+    playSammySoundtrack();
 
     let i = 0;
     for (let layer of activeSandwich.children) {
@@ -436,13 +613,14 @@ function onSammyPartHide() {
 
     if (hiddenSandwichObjects && hiddenSandwichObjects.length > 0) {
         const filtered = hiddenSandwichObjects.filter(object => {
-            return selectedSandwichObject.scene.uuid !== object.scene.uuid;
+            return selectedSandwichObject.layer.name !== object.layer.name;
         });
         
         if (filtered.length !== hiddenSandwichObjects.length) {
             // we have now SHOWN something that was already hidden
             fadeAllMaterials(selectedSandwichObject.scene, 1.0);
             hiddenSandwichObjects = filtered;
+            playSammySoundtrack();
             return;
         }
     }
@@ -456,6 +634,7 @@ function onSammyPartHide() {
     added.push(selectedSandwichObject);
     fadeAllMaterials(selectedSandwichObject.scene, 0.2);
     hiddenSandwichObjects = added;
+    playSammySoundtrack();
 }
 
 function onSammySwapSelect() {
@@ -525,6 +704,8 @@ panel.addEventListener("click", (event) => {
 }, false);
 
 function onKeyPress( event ) {
+    checkFirstTimeSammySoundtrackPlay();
+
     // esc
     if (event.keyCode === 27) {
         onPanelClick();
