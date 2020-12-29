@@ -362,6 +362,16 @@ turnAllMaterials = (thing, hex='ffacac', checkSelected=true) => {
     // }
     
     if (!thing.children || thing.children.length < 1) {
+        if (!thing.material) {
+            return;
+        }
+
+        if (checkSelected) {
+            selectedSandwichMaterials[thing.uuid] = thing.material.color.getHexString();
+        }
+
+        const hexNum = parseInt(hex, 16);
+        thing.material.color.setHex(hexNum);
         return;
     }
 
@@ -371,7 +381,7 @@ turnAllMaterials = (thing, hex='ffacac', checkSelected=true) => {
             selectedSandwichMaterials = {};
 
             for (let childUUID of Object.keys(materialsToChange)) {
-                turnAllMaterials(selectedSandwichScene, materialsToChange[childUUID], false)
+                turnAllMaterials(selectedSandwichScene, 'ffffff', false);
             }
         } else {
             selectedSandwichMaterials = {};
@@ -382,15 +392,6 @@ turnAllMaterials = (thing, hex='ffacac', checkSelected=true) => {
     
     for (let child of thing.children) {
         turnAllMaterials(child, hex, checkSelected);
-
-        if (child.material) {
-            if (checkSelected) {
-                selectedSandwichMaterials[child.uuid] = child.material.color.getHexString();
-            }
-
-            const hexNum = parseInt(hex, 16);
-            child.material.color.setHex(hexNum);
-        }
     }
 }
 
