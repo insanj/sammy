@@ -10,7 +10,7 @@ was a progressive web app built to let you spin around a 3d model and take it ap
 
 ## Usage
 
-No longer live as a PWA. Now, you an install as a tiny NW.js app.
+No longer live as a PWA. Now, you can install as a tiny NW.js app (already built for Mac).
 
 [Download from Releases page.](https://github.com/insanj/sammy/releases)
 
