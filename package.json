@@ -1,28 +1,50 @@
 {
   "name": "sammy",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "🥪  d2c immersive 3d sandwich printer",
-  "main": "index.js",
+  "node-main": "index.js",
+  "main": "http://localhost:3000",
+  "node-remote": "http://localhost:3000",
   "scripts": {
-    "start": "node index.js",
-    "dev": "nodemon --watch public --inspect index.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "express": "node index.js",
+    "nodemon": "nodemon --watch public --inspect index.js",
+    "start": "nwjs_sdk=true ./nwjs/nwjs-sdk-v0.61.0-osx-x64/nwjs.app/Contents/MacOS/nwjs .",
+    "mac": "build --tasks mac-x64 --mirror https://dl.nwjs.io/ .",
+    "win": "build --tasks win-x64 --mirror https://dl.nwjs.io/ .",
+    "lin": "build --tasks linux-x86,linux-x64 --mirror https://dl.nwjs.io/ ."
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/SnowcodeDesign/sammy.git"
+    "url": "git+https://github.com/insanj/sammy.git"
   },
   "author": "Julian Weiss <insanj@gmail.com>",
   "license": "GPL-2",
   "bugs": {
-    "url": "https://github.com/SnowcodeDesign/sammy/issues"
+    "url": "https://github.com/insanj/sammy/issues"
   },
-  "homepage": "https://github.com/SnowcodeDesign/sammy#readme",
+  "homepage": "https://github.com/insanj/sammy#readme",
   "dependencies": {
     "dotenv": "^8.2.0",
     "express": "^4.17.1"
   },
   "devDependencies": {
-    "nodemon": "^2.0.6"
+    "nodemon": "^2.0.6",
+    "nwjs-builder-phoenix": "^1.15.0"
+  },
+  "build": {
+    "appId": "com.insanj.sammy",
+    "nwVersion": "0.61.0",
+    "files": [
+      "index.js",
+      "LICENSE",
+      "public/**/*"
+    ]
+  },
+  "window": {
+    "title": "sammy.best",
+    "width": 760,
+    "height": 760,
+    "resizable": true,
+    "frame": true
   }
 }
