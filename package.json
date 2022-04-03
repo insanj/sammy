@@ -1,6 +1,6 @@
 {
   "name": "sammy",
-  "version": "0.2.0",
+  "version": "1.0.0",
   "description": "🥪  d2c immersive 3d sandwich printer",
   "node-main": "index.js",
   "main": "http://localhost:3000",
